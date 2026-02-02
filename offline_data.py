@@ -1,4 +1,4 @@
-# Auto-generated via GitHub Actions: 2026-02-01 04:26:56.356094
+# Auto-generated via GitHub Actions: 2026-02-02 04:20:22.492674
 SCHEDULE = {
     0: [(36, 'S3', 'Ludwigshafen, Hbf')],
     1: [(3, 'S3', 'Karlsruhe Hbf')],
