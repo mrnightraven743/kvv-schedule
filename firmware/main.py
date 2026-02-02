@@ -138,10 +138,6 @@ def get_cet_time():
     oct_last_sunday = 31 - (int(5 * year / 4 + 1) % 7)
 
     # Logical DST determination
-    # 1. Month between April and September (exclusive) -> Summer
-    # 2. March: Day > last Sunday OR (Today is last Sunday AND Hour >= 1 UTC) -> Summer
-    # 3. October: Day < last Sunday OR (Today is last Sunday AND Hour < 1 UTC) -> Summer
-    
     is_dst = (
         (month > 3 and month < 10) or
         (month == 3 and (day > march_last_sunday or (day == march_last_sunday and hour >= 1))) or
@@ -312,23 +308,26 @@ def show_status(msg):
     display.text(msg, 0, 30, 15)
     display.show()
 
+# --- FIXED UPDATE CHECK (Full Date) ---
 def save_update_date():
-    """Save current day of month to file to remember update"""
+    """Save current date (YYYYMMDD) to file"""
     try:
-        # Use local time, not UTC
-        current_day = get_cet_time()[2]
+        t = get_cet_time()
+        # Format: YYYYMMDD (e.g. 20231025)
+        date_str = "{}{:02d}{:02d}".format(t[0], t[1], t[2])
         with open('last_upd.txt', 'w') as f:
-            f.write(str(current_day))
+            f.write(date_str)
     except: pass
 
 def check_if_updated_today():
-    """Check if update was already performed today"""
+    """Check if update was already performed today using full date"""
     try:
-        # Use local time
-        current_day = get_cet_time()[2]
+        t = get_cet_time()
+        current_date_str = "{}{:02d}{:02d}".format(t[0], t[1], t[2])
+        
         with open('last_upd.txt', 'r') as f:
-            saved_day = int(f.read())
-            if saved_day == current_day:
+            saved_date_str = f.read().strip()
+            if saved_date_str == current_date_str:
                 return True
     except: pass
     return False
