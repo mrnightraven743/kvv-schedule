@@ -180,25 +180,21 @@ def get_static_schedule(current_h, current_m):
 def get_live_schedule():
     global last_weather
     gc.collect() 
+    
+    # --- 1. Weather Update (Independent of Transport) ---
+    try:
+        res = urequests.get(WEATHER_URL)
+        if res.status_code == 200:
+            js = json.loads(res.text)
+            temp = js.get('current_weather', {}).get('temperature')
+            last_weather = f"{temp}C"
+        if res: res.close()
+    except:
+        pass # If weather fails, we just keep the old value
+    gc.collect()
+
+    # --- 2. Transport Update (Critical, with retries) ---
     for attempt in range(2):
-        # Weather
-        if attempt == 0:
-            res = None
-            try:
-                res = urequests.get(WEATHER_URL)
-                if res.status_code == 200:
-                    js = json.loads(res.text)
-                    temp = js.get('current_weather', {}).get('temperature')
-                    last_weather = f"{temp}C"
-            except:
-                pass
-            finally: 
-                if res:
-                    try: res.close()
-                    except: pass
-                gc.collect() 
-        
-        # Transport
         res = None
         try:
             res = urequests.get(KVV_URL)
@@ -308,7 +304,6 @@ def show_status(msg):
     display.text(msg, 0, 30, 15)
     display.show()
 
-# --- FIXED UPDATE CHECK (Full Date) ---
 def save_update_date():
     """Save current date (YYYYMMDD) to file"""
     try:
