@@ -49,7 +49,6 @@ except:
 
 rtc = RTC()
 last_weather = "" 
-wifi_blink_state = False
 update_done_today = False 
 
 # Safe data import
@@ -123,6 +122,37 @@ def sync_time():
     except:
         return False
 
+# --- ROBUST TIME FUNCTION (Logic based, No mktime) ---
+def get_cet_time():
+    """
+    Returns local time (tuple) for Germany (CET/CEST).
+    Uses logical date comparison instead of mktime to avoid OS dependencies.
+    """
+    # Get UTC time
+    utc = time.gmtime()
+    # Unpack (year, month, day, hour)
+    year, month, day, hour = utc[0], utc[1], utc[2], utc[3]
+
+    # Gauss algorithm for last Sunday
+    march_last_sunday = 31 - (int(5 * year / 4 + 4) % 7)
+    oct_last_sunday = 31 - (int(5 * year / 4 + 1) % 7)
+
+    # Logical DST determination
+    # 1. Month between April and September (exclusive) -> Summer
+    # 2. March: Day > last Sunday OR (Today is last Sunday AND Hour >= 1 UTC) -> Summer
+    # 3. October: Day < last Sunday OR (Today is last Sunday AND Hour < 1 UTC) -> Summer
+    
+    is_dst = (
+        (month > 3 and month < 10) or
+        (month == 3 and (day > march_last_sunday or (day == march_last_sunday and hour >= 1))) or
+        (month == 10 and (day < oct_last_sunday or (day == oct_last_sunday and hour < 1)))
+    )
+
+    offset = 2 if is_dst else 1
+    
+    # Add offset to current UTC timestamp and convert back
+    return time.gmtime(time.time() + offset * 3600)
+
 def get_static_schedule(current_h, current_m):
     if offline_data is None or not hasattr(offline_data, 'SCHEDULE'):
         return []
@@ -140,7 +170,6 @@ def get_static_schedule(current_h, current_m):
             
             diff = train_time_abs - now_time_abs
             if 0 <= diff <= 90:
-                # Must shorten text here too
                 short_dest = shorten_text(dest)
                 departures.append({
                     'line': line,
@@ -283,11 +312,11 @@ def show_status(msg):
     display.text(msg, 0, 30, 15)
     display.show()
 
-# --- NEW FUNCTIONS FOR UPDATE CHECK ---
 def save_update_date():
     """Save current day of month to file to remember update"""
     try:
-        current_day = time.localtime()[2]
+        # Use local time, not UTC
+        current_day = get_cet_time()[2]
         with open('last_upd.txt', 'w') as f:
             f.write(str(current_day))
     except: pass
@@ -295,7 +324,8 @@ def save_update_date():
 def check_if_updated_today():
     """Check if update was already performed today"""
     try:
-        current_day = time.localtime()[2]
+        # Use local time
+        current_day = get_cet_time()[2]
         with open('last_upd.txt', 'r') as f:
             saved_day = int(f.read())
             if saved_day == current_day:
@@ -304,7 +334,7 @@ def check_if_updated_today():
     return False
 
 def main():
-    global wifi_blink_state, update_done_today
+    global update_done_today
     
     display.fill(0); display.text("System Start...", 0, 30, 15); display.show()
     print("Start")
@@ -320,12 +350,12 @@ def main():
     show_status("Syncing Time...")
     sync_time()
     
-    # CHECK AFTER START: Have we updated today?
+    # CHECK AFTER START
     if check_if_updated_today():
         print("Already updated today.")
         update_done_today = True
 
-    # --- 2. FILE CHECK AT START ---
+    # --- 2. FILE CHECK ---
     try:
         os.stat('offline_data.py')
     except OSError:
@@ -348,19 +378,21 @@ def main():
     # --- 3. MAIN LOOP ---
     while True:
         now = time.ticks_ms()
-        t = time.localtime()
-        h = (t[3] + 1) % 24
+        
+        # Get correct local time (CET/CEST)
+        t = get_cet_time()
+        h = t[3]
         m = t[4]
         time_str = "{:02d}:{:02d}".format(h, m)
+        
         online = wlan.isconnected()
         
         # Reset update flag at 2 AM
         if h == 2: update_done_today = False
         
         # --- UPDATE LOGIC ---
-        # Now try to update if time >= 3 hours and we have NOT updated today
         if h >= 3 and online and not update_done_today:
-            # To avoid spamming server every second, pause between attempts (10 minutes)
+            # Pause between attempts (10 minutes)
             if time.ticks_diff(now, last_retry_time) > 600000 or last_retry_time == 0:
                 show_status("Updating Schedule...")
                 if schedule_updater.update_from_github():
@@ -374,17 +406,15 @@ def main():
                     last_retry_time = now # Remember failure time
                     show_status("Update Fail. Retry later.")
                     time.sleep(2)
-                    # Flag update_done_today NOT set, try later
 
         # --- WIFI MANAGEMENT ---
         if not online:
-            wifi_blink_state = not wifi_blink_state
             if time.ticks_diff(now, reconnect_timer) > 15000:
                 reconnect_timer = now
                 safe_connect() 
         else:
-            wifi_blink_state = False
-            if t[0] == 2000:
+            # Sync time once an hour (at 00 minutes)
+            if t[4] == 0 and t[5] < 5:
                 sync_time()
 
         # --- DISPLAY UPDATE ---
