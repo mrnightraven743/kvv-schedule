@@ -57,16 +57,26 @@ try:
 except ImportError:
     offline_data = None 
 
-REPLACEMENTS = {"Bahnhof": "Bhf", "Straße": "Str.", "Platz": "Pl.", "Kaiserslautern, Hauptbahnhof": "Kaiserslautern", "Kaiserslautern, Hbf": "Kaiserslautern", "Kaiserslautern, Hbf": "Kaiserslautern", "Hauptbahnhof": "Hbf",
-                ", ": " "}
+REPLACEMENTS = {
+    "Bahnhof": "Bhf", 
+    "Straße": "Str.", 
+    "Platz": "Pl.", 
+    "Kaiserslautern, Hauptbahnhof": "Kaiserslautern", 
+    "Kaiserslautern, Hbf": "Kaiserslautern", 
+    "Kaiserslautern Hbf": "Kaiserslautern", 
+    "Homburg (Saar) Hbf": "Homburg Hbf", 
+    "Homburg (Saar)": "Homburg",
+    "Hauptbahnhof": "Hbf",
+    ", ": " "
+}
 WIFI_BITMAP = ["   XXXXXXX   ", "  X       X  ", " X  XXXXX  X ", "X  X     X  X", "  X  XXX  X  ", "    X   X    ", "      X      "]
 
 def shorten_text(text):
     for full, short in REPLACEMENTS.items():
         text = text.replace(full, short)
-    # Limit length to 17 characters
-    if len(text) > 17:
-        text = text[:17] + "."
+    
+    if len(text) > 19:
+        text = text[:19] + "."
     return text
 
 def draw_umlaut_o(x, y):
@@ -434,3 +444,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
