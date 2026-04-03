@@ -11,15 +11,21 @@ import ssd1322
 import schedule_updater
 
 # --- CONFIGURATION ---
-WIFI_SSID = "YOUR_WIFI_SSID"
-WIFI_PASS = "YOUR_WIFI_PASSWORD"
+WIFI_NETWORKS = [
+    ("iPhone (Вікторія)", "vikaelsukova03"),
+    ("iPhone (Наталя)", "11111111"),
+    ("GalaxyS22", "leef7961")
+]
+
 STOP_ID = "7001862" 
 KVV_URL = f"http://www.kvv.de/tunnelEfaDirect.php?action=XSLT_DM_REQUEST&outputFormat=JSON&mode=direct&type_dm=any&useRealtime=1&limit=5&name_dm={STOP_ID}"
 LAT = "49.2208"
 LON = "8.6469"
 WEATHER_URL = f"http://api.open-meteo.com/v1/forecast?latitude={LAT}&longitude={LON}&current_weather=true"
 
-# --- DISPLAY ---
+wifi_next_idx = 0
+
+# --- DISPLAY CONFIGURATION ---
 SPI_PORT = 2
 SCK_PIN = 18
 MOSI_PIN = 23
@@ -27,7 +33,7 @@ CS_PIN = 5
 DC_PIN = 17
 RST_PIN = 16
 
-# Display reset
+# Display reset sequence
 rst = Pin(RST_PIN, Pin.OUT)
 rst.value(1)
 time.sleep(0.1)
@@ -51,12 +57,13 @@ rtc = RTC()
 last_weather = "" 
 update_done_today = False 
 
-# Safe data import
+# Import offline schedule data safely
 try:
     import offline_data
 except ImportError:
     offline_data = None 
 
+# Text replacement dictionary to fit names on screen
 REPLACEMENTS = {
     "Bahnhof": "Bhf", 
     "Straße": "Str.", 
@@ -67,11 +74,17 @@ REPLACEMENTS = {
     "Homburg (Saar) Hbf": "Homburg Hbf", 
     "Homburg (Saar)": "Homburg",
     "Hauptbahnhof": "Hbf",
-    ", ": " "
+    ", ": " ",
+    
+    "Вікторія": "Sonechko",
+    "Наталя": "Mutter"
 }
+
+# Bitmap for WiFi icon
 WIFI_BITMAP = ["   XXXXXXX   ", "  X       X  ", " X  XXXXX  X ", "X  X     X  X", "  X  XXX  X  ", "    X   X    ", "      X      "]
 
 def shorten_text(text):
+    """Abbreviates station names using the REPLACEMENTS dictionary."""
     for full, short in REPLACEMENTS.items():
         text = text.replace(full, short)
     
@@ -80,10 +93,17 @@ def shorten_text(text):
     return text
 
 def draw_umlaut_o(x, y):
+    """Draws custom umlaut dots over 'o'."""
+    display.pixel(x + 2, y - 1, 15)
+    display.pixel(x + 5, y - 1, 15)
+    
+def draw_umlaut_a(x, y):
+    """Draws custom umlaut dots over 'a'."""
     display.pixel(x + 2, y - 1, 15)
     display.pixel(x + 5, y - 1, 15)
 
 def draw_wifi_icon(x, y, connected):
+    """Draws WiFi icon if connected, or a cross if disconnected."""
     if connected:
         for r, s in enumerate(WIFI_BITMAP):
             for c, char in enumerate(s):
@@ -95,37 +115,90 @@ def draw_wifi_icon(x, y, connected):
         display.line(x+9, y, x, y+8, 15)
 
 def wifi_reset():
-    """Reset WiFi on error"""
+    """Hardware reset for the WiFi interface."""
     print("WiFi Interface Reset...")
     try:
         wlan.active(False)
-        time.sleep(1)
+        time.sleep(0.5)
         wlan.active(True)
-        time.sleep(1)
-        wlan.connect(WIFI_SSID, WIFI_PASS)
+        time.sleep(0.5)
     except:
         pass
 
-def safe_connect():
-    """Connection with Internal State Error protection"""
+def safe_connect(silent=False):
+    """
+    Connects to WiFi. 
+    silent=False: Blocking loop with display updates (used on startup).
+    silent=True: Background mode, tries one network and exits.
+    """
+    global wifi_next_idx
+    
+    # Return if already connected
     if wlan.isconnected():
         return True
-    
-    print("Connecting WiFi...")
-    try:
-        wlan.connect(WIFI_SSID, WIFI_PASS)
-    except OSError as e:
-        print(f"WiFi Error detected: {e}")
-        wifi_reset()
-        
-    # Wait for connection
-    for _ in range(10):
-        if wlan.isconnected():
-            return True
-        time.sleep(1)
-    return False
 
+    # MODE 1: Startup (Blocking with display)
+    if not silent:
+        print("Starting WiFi Loop (Blocking)...")
+        while True:
+            for ssid, password in WIFI_NETWORKS:
+                print(f"Trying: {ssid}")
+                
+                # Prepare screen
+                display_ssid = shorten_text(ssid)
+                if len(display_ssid) > 19: display_ssid = display_ssid[:19]
+
+                display.fill(0)
+                display.text("WiFi Connect...", 0, 2, 15)
+                display.hline(0, 12, 256, 6)
+                display.text(f"Try: {display_ssid}", 0, 30, 15)
+                display.show()
+
+                try:
+                    # Disconnect before new attempt
+                    wlan.disconnect() 
+                    time.sleep(0.5)  
+                    wlan.connect(ssid, password)
+                except OSError:
+                    continue
+                
+                # Wait up to 8 seconds for connection
+                for _ in range(8):
+                    if wlan.isconnected():
+                        display.text("OK!", 200, 30, 15); display.show()
+                        time.sleep(1)
+                        return True
+                    time.sleep(1)
+            
+            # If all networks fail, reset WiFi
+            display.fill(0)
+            display.text("No WiFi found", 0, 20, 15)
+            display.text("Resetting...", 0, 35, 15)
+            display.show()
+            wifi_reset()
+
+    # MODE 2: Background (Silent)
+    else:
+        # Try the next network in the list
+        if wifi_next_idx >= len(WIFI_NETWORKS):
+            wifi_next_idx = 0
+            
+        ssid, password = WIFI_NETWORKS[wifi_next_idx]
+        print(f"Background attempt: {ssid}")
+        
+        try:
+            wlan.disconnect()
+            time.sleep(0.1)
+            wlan.connect(ssid, password)
+        except OSError:
+            pass
+            
+        # Update index for next time
+        wifi_next_idx += 1
+        return False
+        
 def sync_time():
+    """Syncs local time via NTP."""
     try:
         ntptime.settime()
         return True
@@ -138,9 +211,7 @@ def get_cet_time():
     Returns local time (tuple) for Germany (CET/CEST).
     Uses logical date comparison instead of mktime to avoid OS dependencies.
     """
-    # Get UTC time
     utc = time.gmtime()
-    # Unpack (year, month, day, hour)
     year, month, day, hour = utc[0], utc[1], utc[2], utc[3]
 
     # Gauss algorithm for last Sunday
@@ -160,6 +231,7 @@ def get_cet_time():
     return time.gmtime(time.time() + offset * 3600)
 
 def get_static_schedule(current_h, current_m):
+    """Generates departures from offline data if API is unreachable."""
     if offline_data is None or not hasattr(offline_data, 'SCHEDULE'):
         return []
         
@@ -171,6 +243,7 @@ def get_static_schedule(current_h, current_m):
             train_time_abs = check_h * 60 + minute
             now_time_abs = current_h * 60 + current_m
             
+            # Handle midnight rollover
             if check_h < current_h:
                 train_time_abs += 24 * 60
             
@@ -188,10 +261,11 @@ def get_static_schedule(current_h, current_m):
     return departures
 
 def get_live_schedule():
+    """Fetches weather and transport data from APIs."""
     global last_weather
     gc.collect() 
     
-    # --- 1. Weather Update (Independent of Transport) ---
+    # --- 1. Weather Update ---
     try:
         res = urequests.get(WEATHER_URL)
         if res.status_code == 200:
@@ -200,10 +274,10 @@ def get_live_schedule():
             last_weather = f"{temp}C"
         if res: res.close()
     except:
-        pass # If weather fails, we just keep the old value
+        pass 
     gc.collect()
 
-    # --- 2. Transport Update (Critical, with retries) ---
+    # --- 2. Transport Update ---
     for attempt in range(2):
         res = None
         try:
@@ -221,8 +295,13 @@ def get_live_schedule():
                 for dep in dep_list:
                     line = dep.get('servingLine', {}).get('symbol', '?')
                     direction = dep.get('servingLine', {}).get('direction', 'Unknown')
+                    
                     if '>' in direction:
                         direction = direction.split('>')[0].strip()
+                    
+                    # Check if trip is cancelled (via status or text)
+                    status = dep.get('realtimeTripStatus', '').upper()
+                    is_cancelled = ('CANCEL' in status) or ('ENTF' in direction.upper())
                     
                     real_dt = dep.get('realDateTime', dep.get('dateTime', {}))
                     rh = int(real_dt.get('hour', 0))
@@ -237,7 +316,8 @@ def get_live_schedule():
                         'direction': shorten_text(direction),
                         'time': "{:02d}:{:02d}".format(rh, rm),
                         'countdown': cd,
-                        'is_real': True
+                        'is_real': True,
+                        'cancelled': is_cancelled
                     })
                 del dep_list
                 gc.collect()
@@ -257,9 +337,10 @@ def get_live_schedule():
                 try: res.close()
                 except: pass
             gc.collect()
-    return None 
+    return None
 
 def update_display(deps, time_str, online):
+    """Draws the main interface and departure list on the screen."""
     display.fill(0)
     display.text("Bad Schonborn", 0, 2, 15)
     draw_umlaut_o(56, 2) 
@@ -285,7 +366,7 @@ def update_display(deps, time_str, online):
             display.text("Warte auf WiFi...", 0, 30, 10)
     else:
         if not deps[0]['is_real']:
-             # Centered OFFLINE PLAN (x=64)
+             # Centered OFFLINE PLAN warning
              display.text("* OFFLINE PLAN *", 64, 56, 10)
         
         cnt = 0
@@ -293,21 +374,29 @@ def update_display(deps, time_str, online):
         for d in deps:
             if cnt >= 4: break
             dst = d['direction']
+            # Limit duplicates for the same destination
             if seen.get(dst, 0) >= 2: continue
             seen[dst] = seen.get(dst, 0) + 1
             
-            t = "sofort" if d['countdown'] == 0 else (f"in {d['countdown']} min" if d['countdown']<=9 else d['time'])
+            if d.get('cancelled', False):
+                t = "entfallt"
+            else:
+                t = "sofort" if d['countdown'] == 0 else (f"in {d['countdown']} min" if d['countdown']<=9 else d['time'])
             
             display.text(d['line'], 0, y, 15)
             display.text(dst, 35, y, 10)
-            # Time at new coordinate
             display.text(t, time_x, y, 15)
+            
+            # Draw umlaut 'a' if train is cancelled
+            if d.get('cancelled', False):
+                draw_umlaut_a(time_x + 32, y)
             
             y += 10
             cnt += 1
     display.show()
 
 def show_status(msg):
+    """Displays system status messages."""
     display.fill(0)
     display.text("System Info", 0, 2, 15)
     display.hline(0, 12, 256, 6)
@@ -315,7 +404,7 @@ def show_status(msg):
     display.show()
 
 def save_update_date():
-    """Save current date (YYYYMMDD) to file"""
+    """Save current date (YYYYMMDD) to file to track offline data updates."""
     try:
         t = get_cet_time()
         # Format: YYYYMMDD (e.g. 20231025)
@@ -325,7 +414,7 @@ def save_update_date():
     except: pass
 
 def check_if_updated_today():
-    """Check if update was already performed today using full date"""
+    """Check if schedule update was already performed today."""
     try:
         t = get_cet_time()
         current_date_str = "{}{:02d}{:02d}".format(t[0], t[1], t[2])
@@ -354,7 +443,7 @@ def main():
     show_status("Syncing Time...")
     sync_time()
     
-    # CHECK AFTER START
+    # Check if schedule was already updated today
     if check_if_updated_today():
         print("Already updated today.")
         update_done_today = True
@@ -365,8 +454,8 @@ def main():
     except OSError:
         show_status("Downloading Data...")
         if schedule_updater.update_from_github():
-            save_update_date() # Remember date!
-            # Success -> Countdown 10 sec
+            save_update_date()
+            # Success -> Countdown 10 sec before reboot
             for i in range(10, 0, -1):
                 show_status(f"Success! Reboot {i}s")
                 time.sleep(1)
@@ -400,24 +489,24 @@ def main():
             if time.ticks_diff(now, last_retry_time) > 600000 or last_retry_time == 0:
                 show_status("Updating Schedule...")
                 if schedule_updater.update_from_github():
-                    save_update_date() # Record that we updated today
-                    # Success -> Countdown 10 sec
+                    save_update_date()
                     for i in range(10, 0, -1):
                         show_status(f"Updated! Reboot {i}s")
                         time.sleep(1)
                     machine.reset()
                 else:
-                    last_retry_time = now # Remember failure time
+                    last_retry_time = now
                     show_status("Update Fail. Retry later.")
                     time.sleep(2)
 
         # --- WIFI MANAGEMENT ---
         if not online:
+            # Reconnect every 15 seconds if offline
             if time.ticks_diff(now, reconnect_timer) > 15000:
                 reconnect_timer = now
-                safe_connect() 
+                safe_connect(silent=True) 
         else:
-            # Sync time once an hour (at 00 minutes)
+            # Sync time once an hour
             if t[4] == 0 and t[5] < 5:
                 sync_time()
 
@@ -444,4 +533,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
