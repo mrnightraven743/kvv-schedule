@@ -12,9 +12,9 @@ import schedule_updater
 
 # --- CONFIGURATION ---
 WIFI_NETWORKS = [
-    ("iPhone (Вікторія)", "vikaelsukova03"),
-    ("iPhone (Наталя)", "11111111"),
-    ("GalaxyS22", "leef7961")
+    ("XXXX", "XXXX"),
+    ("XXXX", "XXXX"),
+    ("XXXX", "XXXX")
 ]
 
 STOP_ID = "7001862" 
