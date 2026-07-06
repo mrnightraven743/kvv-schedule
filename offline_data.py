@@ -1,8 +1,8 @@
-# Auto-generated via GitHub Actions: 2026-07-05 05:59:22.842415
+# Auto-generated via GitHub Actions: 2026-07-06 06:23:04.536865
 SCHEDULE = {
     0: [(36, 'S3', 'Ludwigshafen, Hbf')],
     1: [(3, 'S3', 'Karlsruhe Hbf')],
-    2: [(5, 'S3', 'Karlsruhe Hbf')],
+    2: [(1, 'S3', 'Karlsruhe Hbf')],
     3: [(44, 'S1', 'Homburg (Saar) Hbf')],
     4: [(22, 'S3', 'Karlsruhe Hbf'), (46, 'S3', 'Germersheim, Bhf'), (46, 'S2', 'Kaiserslautern, Hbf'), (57, 'S3', 'Karlsruhe Hbf')],
     5: [(12, 'S3', 'Mannheim, Hbf'), (35, 'S3', 'Karlsruhe Hbf'), (42, 'S3', 'Mannheim, Hbf')],
@@ -23,5 +23,5 @@ SCHEDULE = {
     20: [(6, 'S3', 'Karlsruhe Hbf'), (23, 'S3', 'Mannheim, Hbf'), (37, 'S3', 'Bruchsal'), (49, 'S3', 'Graben-Neudorf')],
     21: [(7, 'S3', 'Karlsruhe Hbf'), (19, 'S3', 'Germersheim, Bhf'), (43, 'S3', 'Karlsruhe Hbf'), (51, 'S2', 'Kaiserslautern Hbf')],
     22: [(14, 'S3', 'Bruchsal'), (19, 'S3', 'Germersheim, Bhf'), (43, 'S3', 'Karlsruhe Hbf'), (49, 'S2', 'Kaiserslautern Hbf')],
-    23: [(12, 'S3', 'Bruchsal'), (19, 'S2', 'Neustadt, Hbf'), (44, 'S3', 'Karlsruhe Hbf'), (51, 'S3', 'Ludwigshafen, Hbf')],
+    23: [(12, 'S3', 'Bruchsal'), (19, 'S2', 'Neustadt, Hbf'), (44, 'S3', 'Karlsruhe Hbf'), (51, 'S3', 'Heidelberg, Hbf')],
 }
