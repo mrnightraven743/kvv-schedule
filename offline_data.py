@@ -1,10 +1,10 @@
-# Auto-generated via GitHub Actions: 2026-09-13 07:04:34.228955
+# Auto-generated via GitHub Actions: 2026-09-14 07:28:01.048363
 SCHEDULE = {
     0: [(36, 'S2', 'Ludwigshafen, Hbf')],
-    1: [(3, 'S2', 'Bruchsal')],
-    2: [(1, 'S3', 'Bruchsal')],
-    3: [],
-    4: [(8, 'S1', 'Homburg (Saar) Hbf'), (22, 'S3', 'Karlsruhe Hbf'), (46, 'S2', 'Kaiserslautern, Hbf'), (46, 'S3', 'Germersheim, Bhf'), (57, 'S3', 'Karlsruhe Hbf')],
+    1: [(3, 'S2', 'Karlsruhe Hbf')],
+    2: [(1, 'S3', 'Karlsruhe Hbf')],
+    3: [(44, 'S1', 'Homburg (Saar) Hbf')],
+    4: [(22, 'S3', 'Karlsruhe Hbf'), (46, 'S3', 'Germersheim, Bhf'), (46, 'S2', 'Kaiserslautern, Hbf'), (57, 'S3', 'Karlsruhe Hbf')],
     5: [(12, 'S2', 'Kaiserslautern, Hbf'), (35, 'S3', 'Karlsruhe Hbf'), (42, 'S3', 'Germersheim, Bhf')],
     6: [(2, 'S3', 'Karlsruhe Hbf'), (5, 'S2', 'Kaiserslautern, Hbf'), (15, 'S3', 'Heidelberg, Hbf'), (17, 'S3', 'Karlsruhe Hbf'), (51, 'S3', 'Karlsruhe Hbf'), (52, 'S3', 'Germersheim, Bhf')],
     7: [(6, 'S3', 'Karlsruhe Hbf'), (10, 'S3', 'Mannheim, Hbf'), (22, 'S3', 'Germersheim, Bhf'), (26, 'S3', 'Karlsruhe Hbf'), (44, 'S3', 'Karlsruhe Hbf'), (52, 'S3', 'Germersheim, Bhf')],
@@ -21,7 +21,7 @@ SCHEDULE = {
     18: [(7, 'S3', 'Karlsruhe Hbf'), (19, 'S3', 'Germersheim, Bhf'), (37, 'S3', 'Karlsruhe Hbf'), (49, 'S3', 'Germersheim, Bhf')],
     19: [(13, 'S3', 'Karlsruhe Hbf'), (19, 'S3', 'Germersheim, Bhf'), (37, 'S3', 'Bruchsal'), (52, 'S3', 'Germersheim, Bhf')],
     20: [(6, 'S3', 'Karlsruhe Hbf'), (23, 'S4', 'Mannheim, Hbf'), (37, 'S3', 'Bruchsal'), (49, 'S4', 'Graben-Neudorf')],
-    21: [(7, 'S3', 'Karlsruhe Hbf'), (19, 'S2', 'Neustadt, Hbf'), (19, 'S3', 'Germersheim, Bhf'), (43, 'S3', 'Karlsruhe Hbf'), (51, 'S1', 'Kaiserslautern, Hbf')],
+    21: [(7, 'S3', 'Karlsruhe Hbf'), (19, 'S3', 'Germersheim, Bhf'), (19, 'S2', 'Neustadt, Hbf'), (43, 'S3', 'Karlsruhe Hbf'), (51, 'S1', 'Kaiserslautern, Hbf')],
     22: [(14, 'S3', 'Bruchsal'), (19, 'S3', 'Germersheim, Bhf'), (43, 'S3', 'Karlsruhe Hbf'), (49, 'S1', 'Kaiserslautern, Hbf')],
     23: [(12, 'S3', 'Bruchsal'), (19, 'S2', 'Neustadt, Hbf'), (44, 'S3', 'Karlsruhe Hbf'), (51, 'S3', 'Heidelberg, Hbf')],
 }
