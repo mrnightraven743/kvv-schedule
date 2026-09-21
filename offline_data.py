@@ -1,8 +1,8 @@
-# Auto-generated via GitHub Actions: 2026-09-20 07:21:36.408544
+# Auto-generated via GitHub Actions: 2026-09-21 07:31:48.915857
 SCHEDULE = {
     0: [(36, 'S2', 'Ludwigshafen, Hbf')],
     1: [(3, 'S2', 'Karlsruhe Hbf')],
-    2: [(1, 'S3', 'Karlsruhe Hbf')],
+    2: [(1, 'S3', 'Bruchsal')],
     3: [(44, 'S1', 'Homburg (Saar) Hbf')],
     4: [(22, 'S3', 'Karlsruhe Hbf'), (46, 'S3', 'Germersheim, Bhf'), (46, 'S2', 'Kaiserslautern, Hbf'), (57, 'S3', 'Karlsruhe Hbf')],
     5: [(12, 'S2', 'Kaiserslautern, Hbf'), (35, 'S3', 'Karlsruhe Hbf'), (42, 'S3', 'Germersheim, Bhf')],
