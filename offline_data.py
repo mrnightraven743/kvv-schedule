@@ -1,9 +1,9 @@
-# Auto-generated via GitHub Actions: 2026-10-23 06:50:55.357900
+# Auto-generated via GitHub Actions: 2026-10-24 06:47:24.490036
 SCHEDULE = {
     0: [],
     1: [],
     2: [],
-    3: [(44, 'S1', 'Mannheim, Hbf')],
+    3: [(44, 'S1', 'Homburg (Saar) Hbf')],
     4: [],
     5: [],
     6: [],
